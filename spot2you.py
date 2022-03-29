@@ -1,6 +1,4 @@
-from inspect import trace
 import json
-import re
 
 from spotify import Spotify
 from youtube import YouTube
@@ -23,10 +21,8 @@ def main():
     )
 
     # Retrieves Spotify's playlist data.
-    spotify.getSavedTracks()
     spotify.getPlaylists()
     spotify.printPlaylists()
-
     # Constantly tries to get a valid input, which is "all", "cancel", or a comination of the shown numbers.
     targetPlaylists = []
 
@@ -57,6 +53,11 @@ def main():
 
     print(
         f"You have selected the following playlist/s: \n {targetPlaylists}")
+
+    if "starred" in targetPlaylists:
+        spotify.getSavedTracks()
+
+    spotify.getTracks(targetPlaylists)
 
     # Starts opening youtube API connection.
     youtube = YouTube()

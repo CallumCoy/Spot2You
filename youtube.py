@@ -47,9 +47,6 @@ class YouTube:
 
         self.get_playlists()
 
-        for playlist in self.playlistMap:
-            self.get_playlist_videos(self.playlistMap[playlist])
-
     # Searches for the most relevent video, given some search terms.
     def find_video(self, search_term_list):
         request = self.youtube.search().list(
@@ -60,8 +57,10 @@ class YouTube:
             fields="items(snippet(title),id(videoId))"
         )
         response = self.__executeRequest(request)
-
-        return {"title": response['items'][0]['snippet']['title'], "vidID": response['items'][0]['id']['videoId']}
+        try:
+            return {"title": response['items'][0]['snippet']['title'], "vidID": response['items'][0]['id']['videoId']}
+        except:
+            return None
 
     # Gets the playlists from the current youtube account.
     def get_playlists(self):
@@ -141,6 +140,8 @@ class YouTube:
         if not playlistName in self.playlistMap:
             self.new_playlist(playlistName)
 
+        self.get_playlist_videos(self.playlistMap[playlistName])
+
         self.curTarg = playlistName
         inYoutubePlaylist = False
 
@@ -159,6 +160,10 @@ class YouTube:
             if not inYoutubePlaylist:
                 searchInput = track["name"] + " " + " ".join(track["authors"])
                 foundVideo = self.find_video(searchInput)
+
+                if foundVideo == None:
+                    print("No results found.")
+                    break
 
                 # Check if the found video's id already exists in a video within the YouTube playlist.
                 for video in self.videos[self.playlistMap[playlistName]]:
@@ -217,5 +222,10 @@ class YouTube:
         try:
             return request.execute()
         except Exception as e:
+            # Working on getting it to detect if it's a quota error, or something else.
+            # if e.json()["reason"] == "quotaExceeded":
             print(e)
             self.__printStats()
+            # exit()
+
+            #print(f"Request to youtube failed due to: {e['reason']}")

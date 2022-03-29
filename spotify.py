@@ -6,7 +6,8 @@ from textify import clean_string, setifyString
 
 class Spotify:
     playlists = {}
-    playlistMap = []
+    playlistMap = ["starred"]
+    playlists_data = [{"name": "starred"}]
 
     def __init__(self, client_id, client_secret, redirect_url, scope, username):
         self.__username = username
@@ -16,8 +17,8 @@ class Spotify:
                                                               scope=scope))
 
     def printPlaylists(self):
-        for index, playlist in enumerate(self.playlists):
-            print(index, ".", playlist, ":", len(self.playlists[playlist]))
+        for index, playlist in enumerate(self.playlists_data):
+            print(index, ".", playlist["name"])
 
     def getSavedTracks(self):
         tracks = []
@@ -40,26 +41,31 @@ class Spotify:
             tracks = self.__generateTrackList(SavedTracks['items'], tracks)
 
         self.playlists.update({"starred": tracks})
-        self.playlistMap.append("starred")
 
     # Gets all other playlists from spotify.
     def getPlaylists(self):
-        playlists_data = []
         PlaylistList = self.__getUsersPlaylists()
 
         # Forms a list of all the playlists the user has on their profile.
         for playlist in PlaylistList['items']:
-            playlists_data.append(
+            self.playlists_data.append(
                 {"name": playlist['name'], "id": playlist['id']})
+            self.playlistMap.append(playlist["name"])
 
         # Spotify returns pages with a max of 50 playlists a page, so we pull the playlists from all pages.
         while PlaylistList['next']:
             PlaylistList = self.__getNextItem(PlaylistList)
-            playlists_data = self.__generateTrackList(
-                PlaylistList['items'], playlists_data)
+            self.playlists_data = self.__generateTrackList(
+                PlaylistList['items'], self.playlists_data)
+            self.playlistMap.append(playlist["name"])
 
+    def getTracks(self, targetPlaylists):
         # Cycle through each playlist getting all tracks
-        for playlist in playlists_data:
+        for playlist in self.playlists_data:
+
+            if playlist["name"] not in targetPlaylists:
+                continue
+
             tracks = []
 
             playlistData = self.__getPlaylistsTracks(
@@ -73,7 +79,6 @@ class Spotify:
                     playlistData['items'], tracks)
 
             self.playlists.update({playlist["name"]: tracks})
-            self.playlistMap.append(playlist["name"])
 
     # Cleans tracklist data, and adds a list of search terms.
     def __generateTrackList(self, rawTracks, refinedTracks):
