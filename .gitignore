@@ -1,5 +1,4 @@
-client_secret.json
-config.json
+*.json
 token.pickle
 .vscode
 __pycache__
