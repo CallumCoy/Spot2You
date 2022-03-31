@@ -145,7 +145,10 @@ class YouTube:
         self.curTarg = playlistName
         inYoutubePlaylist = False
 
-        for track in spotify_tracks:
+        for id, track in spotify_tracks.items():
+            if track["added"]:
+                continue
+
             spot_words = track["searchTerms"]
 
             # Check if the track's artist and title already exist in a video within the YouTube playlist.
@@ -180,7 +183,10 @@ class YouTube:
                 self.videos_added += 1
                 print("Added: " + foundVideo["title"])
 
+            spotify_tracks[id]["added"] = True
+
         self.__printStats()
+        return spotify_tracks
 
     # prints how many videos were added this session
     def __printStats(self):

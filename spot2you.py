@@ -59,13 +59,28 @@ def main():
 
     spotify.getTracks(targetPlaylists)
 
+    with open('TrackData.json', 'w') as outfile:
+        json.dump(spotify.playlists, outfile, default=set_default)
+
     # Starts opening youtube API connection.
     youtube = YouTube()
 
     # Tries adding all of the playlists that were selected.
     for playlist in targetPlaylists:
         print(playlist)
-        youtube.addToPlaylist(spotify.playlists[playlist], playlist)
+        spotify.playlists[playlist] = youtube.addToPlaylist(
+            spotify.playlists[playlist], playlist)
+
+    print("Writing")
+
+    with open('TrackData.json', 'w') as outfile:
+        json.dump(spotify.playlists, outfile, default=set_default)
+
+
+def set_default(obj):
+    if isinstance(obj, set):
+        return list(obj)
+    raise TypeError
 
 
 main()

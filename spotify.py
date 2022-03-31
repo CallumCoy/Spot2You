@@ -1,3 +1,4 @@
+import json
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -15,13 +16,18 @@ class Spotify:
                                                               client_secret=client_secret,
                                                               redirect_uri=redirect_url,
                                                               scope=scope))
+        try:
+            with open('TrackData.json') as json_file:
+                self.playlists = json.load(json_file)
+        except:
+            print("No Previous data detected.")
 
     def printPlaylists(self):
         for index, playlist in enumerate(self.playlists_data):
             print(index, ".", playlist["name"])
 
     def getSavedTracks(self):
-        tracks = []
+        tracks = {}
         SavedTracks = self.__getUsersSaved()
 
         # Formats all tracks from the saved playlist
@@ -30,10 +36,11 @@ class Spotify:
             cleanAuthors = list(
                 map(self.__getArtist, track['track']['artists']))
 
-            tracks.append(
-                {"name": cleanTitle,
-                 "authors": cleanAuthors,
-                 "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors))})
+            tracks.update({track['track']['id']:
+                           {"name": cleanTitle,
+                            "authors": cleanAuthors,
+                            "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors)),
+                            "added": False}})
 
         # Spotify returns several pages with max length of 20 tracks, so we need to cycle through all of them.
         while SavedTracks['next']:
@@ -66,7 +73,10 @@ class Spotify:
             if playlist["name"] not in targetPlaylists:
                 continue
 
-            tracks = []
+            if playlist["name"] == "starred":
+                continue
+
+            tracks = {}
 
             playlistData = self.__getPlaylistsTracks(
                 playlist['id'], playlist["name"])
@@ -87,10 +97,11 @@ class Spotify:
             cleanAuthors = list(
                 map(self.__getArtist, track['track']['artists']))
 
-            refinedTracks.append(
-                {"name": cleanTitle,
-                 "authors": cleanAuthors,
-                 "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors))})
+            refinedTracks.update({track['track']['id']:
+                                  {"name": cleanTitle,
+                                   "authors": cleanAuthors,
+                                   "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors)),
+                                   "added": False}})
 
         return refinedTracks
 
