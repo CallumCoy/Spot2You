@@ -36,16 +36,18 @@ class Spotify:
             cleanAuthors = list(
                 map(self.__getArtist, track['track']['artists']))
 
-            tracks.update({track['track']['id']:
-                           {"name": cleanTitle,
-                            "authors": cleanAuthors,
-                            "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors)),
-                            "added": False}})
+            if track['track']['id'] not in self.playlists["starred"]:
+                self.playlists["starred"].update({track['track']['id']:
+                                                  {"name": cleanTitle,
+                                                   "authors": cleanAuthors,
+                                                   "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors)),
+                                                   "added": False}})
 
         # Spotify returns several pages with max length of 20 tracks, so we need to cycle through all of them.
         while SavedTracks['next']:
             SavedTracks = self.__getNextItem(SavedTracks)
-            tracks = self.__generateTrackList(SavedTracks['items'], tracks)
+            self.__generateTrackList(
+                SavedTracks['items'], tracks, "starred")
 
         self.playlists.update({"starred": tracks})
 
@@ -61,10 +63,10 @@ class Spotify:
 
         # Spotify returns pages with a max of 50 playlists a page, so we pull the playlists from all pages.
         while PlaylistList['next']:
-            PlaylistList = self.__getNextItem(PlaylistList)
-            self.playlists_data = self.__generateTrackList(
-                PlaylistList['items'], self.playlists_data)
-            self.playlistMap.append(playlist["name"])
+            for playlist in PlaylistList['items']:
+                self.playlists_data.append(
+                    {"name": playlist['name'], "id": playlist['id']})
+                self.playlistMap.append(playlist["name"])
 
     def getTracks(self, targetPlaylists):
         # Cycle through each playlist getting all tracks
@@ -76,34 +78,30 @@ class Spotify:
             if playlist["name"] == "starred":
                 continue
 
-            tracks = {}
-
             playlistData = self.__getPlaylistsTracks(
                 playlist['id'], playlist["name"])
-            tracks = self.__generateTrackList(playlistData['items'], tracks)
+            self.__generateTrackList(
+                playlistData['items'], playlist["name"])
 
             # Spotify returns several pages each with a max of 20 tracks, so we cycle through all pages.
             while playlistData['next']:
                 playlistData = self.__getNextItem(playlistData)
-                tracks = self.__generateTrackList(
-                    playlistData['items'], tracks)
-
-            self.playlists.update({playlist["name"]: tracks})
+                self.__generateTrackList(
+                    playlistData['items'], playlist["name"])
 
     # Cleans tracklist data, and adds a list of search terms.
-    def __generateTrackList(self, rawTracks, refinedTracks):
+    def __generateTrackList(self, rawTracks, PlaylistName):
         for track in rawTracks:
             cleanTitle = clean_string(track['track']['name'])
             cleanAuthors = list(
                 map(self.__getArtist, track['track']['artists']))
 
-            refinedTracks.update({track['track']['id']:
-                                  {"name": cleanTitle,
-                                   "authors": cleanAuthors,
-                                   "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors)),
-                                   "added": False}})
-
-        return refinedTracks
+            if track['track']['id'] not in self.playlists[PlaylistName]:
+                self.playlists[PlaylistName].update({track['track']['id']:
+                                                     {"name": cleanTitle,
+                                                      "authors": cleanAuthors,
+                                                      "searchTerms": setifyString(cleanTitle + " " + " ".join(cleanAuthors)),
+                                                      "added": False}})
 
     # Retrieves a users "saved" songs, aka Liked songs.  Spotify saves this playlist seperate from all the other playlists.
     def __getUsersSaved(self):

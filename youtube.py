@@ -155,7 +155,7 @@ class YouTube:
             for video in self.videos[self.playlistMap[playlistName]]:
                 inYoutubePlaylist = False
 
-                if spot_words.issubset(video["searchTerms"]):
+                if set(spot_words).issubset(video["searchTerms"]):
                     inYoutubePlaylist = True
                     break
 
@@ -199,7 +199,6 @@ class YouTube:
             body={
                 'snippet': {
                     'playlistId': self.playlistMap[self.curTarg],
-                    'position': 1,
                     'resourceId': {
                         'kind': 'youtube#video',
                         'videoId': video_id
