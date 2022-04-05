@@ -27,7 +27,6 @@ class Spotify:
             print(index, ".", playlist["name"])
 
     def getSavedTracks(self):
-        tracks = {}
         SavedTracks = self.__getUsersSaved()
 
         # Formats all tracks from the saved playlist
@@ -47,9 +46,7 @@ class Spotify:
         while SavedTracks['next']:
             SavedTracks = self.__getNextItem(SavedTracks)
             self.__generateTrackList(
-                SavedTracks['items'], tracks, "starred")
-
-        self.playlists.update({"starred": tracks})
+                SavedTracks['items'], "starred")
 
     # Gets all other playlists from spotify.
     def getPlaylists(self):
